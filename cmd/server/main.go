@@ -32,8 +32,8 @@ func main() {
 		log.Fatalf("Failed to parse config: %v", err)
 	}
 	//Init logger
-	appLogger := logger.NewApiLogger(&cfg)
-	appLogger.InitLogger()
+	appLogger := logger.GetLogger()
+	appLogger.InitLogger(&cfg)
 	appLogger.Infof("LogLevel: %s, Mode: %s", cfg.Logger.Level, cfg.Server.Mode)
 
 	//Init db
@@ -48,7 +48,7 @@ func main() {
 		appLogger.Fatalf("Database migration failed: %s", err)
 	}
 	//Init minio client
-	minioClient, err := minio_client.NewMinioClient("localhost:9000", cfg.Minio.AccessKey, cfg.Minio.SecretKey, cfg.Minio.BucketName, appLogger)
+	minioClient, err := minio_client.NewMinioClient(cfg.Minio.Endpoint, cfg.Minio.AccessKey, cfg.Minio.SecretKey, cfg.Minio.BucketName, appLogger)
 	if err != nil {
 		appLogger.Fatalf("Minio init: %s", err)
 	} else {

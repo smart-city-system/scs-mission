@@ -13,14 +13,18 @@ import (
 type MissionService struct {
 	incidentGuidanceRepo     repositories.IncidentGuidanceRepository
 	incidentGuidanceStepRepo repositories.IncidentGuidanceStepRepository
+	incidentRepo             repositories.IncidentRepository
+	incidentMediaRepo        repositories.IncidentMediaRepository
 	minioClient              minio_client.MinioClient
 }
 
-func NewMissionService(incidentGuidanceRepo repositories.IncidentGuidanceRepository, incidentGuidanceStepRepo repositories.IncidentGuidanceStepRepository, minioClient minio_client.MinioClient) *MissionService {
+func NewMissionService(incidentGuidanceRepo repositories.IncidentGuidanceRepository, incidentGuidanceStepRepo repositories.IncidentGuidanceStepRepository, incidentRepo repositories.IncidentRepository, incidentMediaRepo repositories.IncidentMediaRepository, minioClient minio_client.MinioClient) *MissionService {
 	// TODO: Pass minioClient as a parameter or initialize here as needed
 	return &MissionService{
 		incidentGuidanceRepo:     incidentGuidanceRepo,
 		incidentGuidanceStepRepo: incidentGuidanceStepRepo,
+		incidentRepo:             incidentRepo,
+		incidentMediaRepo:        incidentMediaRepo,
 		minioClient:              minioClient,
 	}
 }
@@ -49,13 +53,44 @@ func (s *MissionService) CompleteStep(ctx context.Context, completeMissionDto dt
 	return nil
 }
 
-func (s *MissionService) UpdateIncidentInfo(ctx context.Context, incidentID string, fileName string, fileSize int64, file multipart.File) error {
-	bucketName := "smart-city" // Change as needed
-	objectName := incidentID + "/" + fileName
-
-	_, err := s.minioClient.UploadFile(bucketName, objectName, file, fileSize)
+func (s *MissionService) UpdateIncidentInfo(ctx context.Context, incidentID string, validFiles []map[string]interface{}) error {
+	incident, err := s.incidentRepo.GetIncidentByID(ctx, incidentID)
 	if err != nil {
-		return errors.NewInternalError("failed to upload to minio", err)
+		return errors.NewBadRequestError("incident not found")
 	}
+	// Upload files to minio
+	var incidentMedias []models.IncidentMedia
+	for _, validFile := range validFiles {
+		objectName := validFile["file_name"].(string)
+		file := validFile["file"].(multipart.File)
+		fileSize := validFile["file_size"].(int64)
+		fileType := validFile["mime_type"].(string)
+		fileInfo, err := s.minioClient.UploadFile(objectName, file, fileSize, fileType)
+		if err != nil {
+			return err
+		}
+		incidentMedias = append(incidentMedias, models.IncidentMedia{
+			IncidentID: incident.ID,
+			FileName:   objectName,
+			FileSize:   fileInfo.Size,
+			FileUrl:    "http://" + s.minioClient.Endpoint + "/" + s.minioClient.BucketName + "/" + fileInfo.Key,
+			MediaType:  getFileType(fileType),
+			FileType:   fileType,
+		})
+	}
+	// Create incident media
+	if err := s.incidentMediaRepo.BatchCreate(ctx, incidentMedias); err != nil {
+		return errors.NewDatabaseError("create incident media", err)
+	}
+
 	return nil
+}
+func getFileType(contentType string) string {
+	if contentType == "image/jpeg" || contentType == "image/png" {
+		return "image"
+	}
+	if contentType == "video/mp4" {
+		return "video"
+	}
+	return "other"
 }

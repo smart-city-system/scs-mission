@@ -12,7 +12,8 @@ import (
 type MinioClient struct {
 	client     *minio.Client
 	logger     logger.Logger
-	bucketName string
+	BucketName string
+	Endpoint   string
 }
 
 func NewMinioClient(endpoint string, accessKeyID string, secretAccessKey string, bucketName string, logger logger.Logger) (*MinioClient, error) {
@@ -26,22 +27,22 @@ func NewMinioClient(endpoint string, accessKeyID string, secretAccessKey string,
 	if err := client.MakeBucket(context.Background(), bucketName, minio.MakeBucketOptions{}); err != nil {
 		exists, errBucketExists := client.BucketExists(context.Background(), bucketName)
 		if errBucketExists == nil && exists {
-			return &MinioClient{client: client, logger: logger}, nil
+			return &MinioClient{client: client, logger: logger, BucketName: bucketName, Endpoint: endpoint}, nil
 		} else {
 			return nil, err
 		}
 	}
 
-	return &MinioClient{client: client, logger: logger}, nil
+	return &MinioClient{client: client, logger: logger, BucketName: bucketName, Endpoint: endpoint}, nil
 }
 
 func (c *MinioClient) GetClient() *minio.Client {
 	return c.client
 }
 
-func (c *MinioClient) UploadFile(bucketName string, objectName string, file multipart.File, fileSize int64) (minio.UploadInfo, error) {
-	info, err := c.client.PutObject(context.Background(), bucketName, objectName, file, fileSize, minio.PutObjectOptions{
-		ContentType: "application/octet-stream",
+func (c *MinioClient) UploadFile(objectName string, file multipart.File, fileSize int64, contentType string) (minio.UploadInfo, error) {
+	info, err := c.client.PutObject(context.Background(), c.BucketName, objectName, file, fileSize, minio.PutObjectOptions{
+		ContentType: contentType,
 	})
 	if err != nil {
 		c.logger.Errorf("Failed to upload file to Minio: %v", err)

@@ -60,7 +60,7 @@ func (h *MissionHandler) UpdateIncidentInfo() echo.HandlerFunc {
 			"image/": true,
 			"video/": true,
 		}
-
+		var validFiles []map[string]interface{}
 		for _, fileHeader := range fileHeaders {
 			if fileHeader.Size > maxSize {
 				return echo.NewHTTPError(400, "file size exceeds 10MB")
@@ -87,10 +87,17 @@ func (h *MissionHandler) UpdateIncidentInfo() echo.HandlerFunc {
 			if !valid {
 				return echo.NewHTTPError(400, "invalid file type: only image and video allowed")
 			}
-			err = h.svc.UpdateIncidentInfo(c.Request().Context(), incidentID[0], fileHeader.Filename, fileHeader.Size, file)
-			if err != nil {
-				return err
-			}
+			validFiles = append(validFiles, map[string]interface{}{
+				"file":      file,
+				"mime_type": mimeType,
+				"file_name": incidentID[0] + "/" + fileHeader.Filename,
+				"file_size": fileHeader.Size,
+			})
+
+		}
+		err = h.svc.UpdateIncidentInfo(c.Request().Context(), incidentID[0], validFiles)
+		if err != nil {
+			return err
 		}
 
 		return c.JSON(200, "success")

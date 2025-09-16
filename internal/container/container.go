@@ -13,6 +13,8 @@ type Container struct {
 	// Repositories
 	IncidentGuidanceRepo     *repositories.IncidentGuidanceRepository
 	IncidentGuidanceStepRepo *repositories.IncidentGuidanceStepRepository
+	IncidentRepo             *repositories.IncidentRepository
+	IncidentMediaRepo        *repositories.IncidentMediaRepository
 	UserRepo                 *repositories.UserRepository
 	// Services
 	MissionService *services.MissionService
@@ -23,10 +25,12 @@ func NewContainer(db *gorm.DB, minioClient *minio_client.MinioClient) *Container
 	// Initialize repositories
 	incidentGuidanceRepo := repositories.NewIncidentGuidanceRepository(db)
 	incidentGuidanceStepRepo := repositories.NewIncidentGuidanceStepRepository(db)
+	incidentRepo := repositories.NewIncidentRepository(db)
+	incidentMediaRepo := repositories.NewIncidentMediaRepository(db)
 	userRepo := repositories.NewUserRepository(db)
 	// Initialize services
 
-	missionService := services.NewMissionService(*incidentGuidanceRepo, *incidentGuidanceStepRepo, *minioClient)
+	missionService := services.NewMissionService(*incidentGuidanceRepo, *incidentGuidanceStepRepo, *incidentRepo, *incidentMediaRepo, *minioClient)
 
 	return &Container{
 		// Repositories

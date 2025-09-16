@@ -16,6 +16,7 @@ func (s *Server) MapHandlers(e *echo.Echo) error {
 	mw := middleware.NewMiddlewareManager(s.cfg, []string{"*"}, s.logger)
 	e.Use(mw.RequestLoggerMiddleware)
 	e.Use(mw.ErrorHandlerMiddleware)
+	e.Use(mw.ResponseStandardizer)
 	v1 := e.Group("/api/v1")
 
 	health := v1.Group("/health")
