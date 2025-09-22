@@ -1,0 +1,482 @@
+basePath: /api/v1
+definitions:
+  dto.CompleteMissionDto:
+    description: Request payload for completing a mission step
+    properties:
+      mission_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      step_id:
+        example: 550e8400-e29b-41d4-a716-446655440001
+        type: string
+    required:
+    - mission_id
+    - step_id
+    type: object
+  errors.ErrorDetail:
+    description: Detailed error information
+    properties:
+      details: {}
+      message:
+        example: Validation failed
+        type: string
+      type:
+        allOf:
+        - $ref: '#/definitions/errors.ErrorType'
+        example: VALIDATION_ERROR
+    type: object
+  errors.ErrorResponse:
+    description: Standard error response format
+    properties:
+      error:
+        $ref: '#/definitions/errors.ErrorDetail'
+      request_id:
+        example: req-123456
+        type: string
+      timestamp:
+        example: "2023-01-01T00:00:00Z"
+        type: string
+    type: object
+  errors.ErrorType:
+    enum:
+    - VALIDATION_ERROR
+    - NOT_FOUND
+    - UNAUTHORIZED
+    - FORBIDDEN
+    - BAD_REQUEST
+    - CONFLICT
+    - INTERNAL_ERROR
+    - DATABASE_ERROR
+    - EXTERNAL_SERVICE_ERROR
+    - TIMEOUT_ERROR
+    type: string
+    x-enum-varnames:
+    - ErrorTypeValidation
+    - ErrorTypeNotFound
+    - ErrorTypeUnauthorized
+    - ErrorTypeForbidden
+    - ErrorTypeBadRequest
+    - ErrorTypeConflict
+    - ErrorTypeInternal
+    - ErrorTypeDatabase
+    - ErrorTypeExternal
+    - ErrorTypeTimeout
+  middleware.SuccessResponse:
+    description: Standard success response wrapper
+    properties:
+      code:
+        example: "0000"
+        type: string
+      data: {}
+      status:
+        example: 200
+        type: integer
+    type: object
+  models.Alarm:
+    description: Alarm entity triggered by security events
+    properties:
+      created_at:
+        example: "2023-01-01T00:00:00Z"
+        type: string
+      description:
+        example: Fire alarm triggered in main building
+        type: string
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        format: uuid
+        type: string
+      premise:
+        $ref: '#/definitions/models.Premise'
+      premise_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        format: uuid
+        type: string
+      severity:
+        enum:
+        - low
+        - medium
+        - high
+        example: high
+        type: string
+      triggered_at:
+        example: "2023-01-01T00:00:00Z"
+        type: string
+      type:
+        example: fire
+        type: string
+      updated_at:
+        example: "2023-01-01T00:00:00Z"
+        type: string
+    type: object
+  models.GuidanceStep:
+    description: Individual step within a guidance template procedure
+    properties:
+      created_at:
+        example: "2023-01-01T00:00:00Z"
+        type: string
+      description:
+        example: Quickly evaluate the severity and scope of the fire
+        type: string
+      guidance_template:
+        $ref: '#/definitions/models.GuidanceTemplate'
+      guidance_template_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        format: uuid
+        type: string
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        format: uuid
+        type: string
+      step_number:
+        example: 1
+        type: integer
+      title:
+        example: Assess the situation
+        type: string
+      updated_at:
+        example: "2023-01-01T00:00:00Z"
+        type: string
+    type: object
+  models.GuidanceTemplate:
+    description: Template containing step-by-step guidance for handling incidents
+    properties:
+      category:
+        example: Emergency
+        type: string
+      created_at:
+        example: "2023-01-01T00:00:00Z"
+        type: string
+      description:
+        example: Standard procedure for handling fire emergencies
+        type: string
+      guidance_steps:
+        items:
+          $ref: '#/definitions/models.GuidanceStep'
+        type: array
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        format: uuid
+        type: string
+      name:
+        example: Fire Emergency Response
+        type: string
+      updated_at:
+        example: "2023-01-01T00:00:00Z"
+        type: string
+    type: object
+  models.Incident:
+    description: Security incident entity with status tracking and guidance
+    properties:
+      alarm:
+        $ref: '#/definitions/models.Alarm'
+      alarm_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        format: uuid
+        type: string
+      created_at:
+        example: "2023-01-01T00:00:00Z"
+        type: string
+      description:
+        example: Fire detected on the 3rd floor of Building A
+        type: string
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        format: uuid
+        type: string
+      incident_guidance:
+        $ref: '#/definitions/models.IncidentGuidance'
+      location:
+        example: Building A, Floor 3
+        type: string
+      name:
+        example: Fire in Building A
+        type: string
+      severity:
+        enum:
+        - low
+        - medium
+        - high
+        example: high
+        type: string
+      status:
+        enum:
+        - new
+        - in_progress
+        - resolved
+        example: new
+        type: string
+      updated_at:
+        example: "2023-01-01T00:00:00Z"
+        type: string
+    type: object
+  models.IncidentGuidance:
+    description: Guidance assignment linking an incident to a guidance template with
+      assignee information
+    properties:
+      assignee:
+        $ref: '#/definitions/models.User'
+      assignee_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        format: uuid
+        type: string
+      assigner:
+        $ref: '#/definitions/models.User'
+      assigner_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        format: uuid
+        type: string
+      created_at:
+        example: "2023-01-01T00:00:00Z"
+        type: string
+      guidance_template:
+        $ref: '#/definitions/models.GuidanceTemplate'
+      guidance_template_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        format: uuid
+        type: string
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        format: uuid
+        type: string
+      incident:
+        $ref: '#/definitions/models.Incident'
+      incident_guidance_steps:
+        items:
+          $ref: '#/definitions/models.IncidentGuidanceStep'
+        type: array
+      incident_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        format: uuid
+        type: string
+      updated_at:
+        example: "2023-01-01T00:00:00Z"
+        type: string
+    type: object
+  models.IncidentGuidanceStep:
+    description: Individual step within an incident guidance with completion tracking
+    properties:
+      completed_at:
+        example: "2023-01-01T00:00:00Z"
+        type: string
+      created_at:
+        example: "2023-01-01T00:00:00Z"
+        type: string
+      description:
+        example: Quickly evaluate the severity and scope of the incident
+        type: string
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        format: uuid
+        type: string
+      incident_guidance:
+        $ref: '#/definitions/models.IncidentGuidance'
+      incident_guidance_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        format: uuid
+        type: string
+      is_completed:
+        example: false
+        type: boolean
+      step_number:
+        example: 1
+        type: integer
+      title:
+        example: Assess the situation
+        type: string
+      updated_at:
+        example: "2023-01-01T00:00:00Z"
+        type: string
+    type: object
+  models.Premise:
+    description: Premise entity representing physical locations in the system
+    properties:
+      address:
+        example: 123 Main Street, City, Country
+        type: string
+      created_at:
+        example: "2023-01-01T00:00:00Z"
+        type: string
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        format: uuid
+        type: string
+      name:
+        example: Main Building
+        type: string
+      parent_premise:
+        $ref: '#/definitions/models.Premise'
+      parent_premise_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        format: uuid
+        type: string
+      updated_at:
+        example: "2023-01-01T00:00:00Z"
+        type: string
+    type: object
+  models.User:
+    description: User entity with authentication and role information
+    properties:
+      created_at:
+        example: "2023-01-01T00:00:00Z"
+        type: string
+      email:
+        example: john.doe@example.com
+        type: string
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        format: uuid
+        type: string
+      name:
+        example: John Doe
+        type: string
+      role:
+        example: admin
+        type: string
+      updated_at:
+        example: "2023-01-01T00:00:00Z"
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is the SCS Mission Service API for managing security incidents
+    and guidance procedures.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: SCS Mission Service API
+  version: "1.0"
+paths:
+  /api/v1/missions/complete:
+    patch:
+      consumes:
+      - application/json
+      description: Mark a specific step in a mission guidance as completed
+      parameters:
+      - description: Complete mission request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CompleteMissionDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Step completed successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/middleware.SuccessResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad request - validation error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "404":
+          description: Mission or step not found
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Complete a mission step
+      tags:
+      - missions
+  /api/v1/missions/me:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all mission assignments for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of mission assignments
+          schema:
+            allOf:
+            - $ref: '#/definitions/middleware.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.IncidentGuidance'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user mission assignments
+      tags:
+      - missions
+  /api/v1/missions/update:
+    put:
+      consumes:
+      - multipart/form-data
+      description: Upload image or video files to document an incident
+      parameters:
+      - description: Incident ID
+        in: formData
+        name: incident_id
+        required: true
+        type: string
+      - description: Media files (images or videos, max 10MB each)
+        in: formData
+        name: files
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Files uploaded successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/middleware.SuccessResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad request - invalid file type or size
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Upload incident media files
+      tags:
+      - missions
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

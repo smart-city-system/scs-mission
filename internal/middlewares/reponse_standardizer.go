@@ -8,9 +8,12 @@ import (
 type CustomContext struct {
 	echo.Context
 }
+
+// SuccessResponse represents the standard success response format
+// @Description Standard success response wrapper
 type SuccessResponse struct {
-	Status int         `json:"status"`
-	Code   string      `json:"code"`
+	Status int         `json:"status" example:"200"`
+	Code   string      `json:"code" example:"0000"`
 	Data   interface{} `json:"data,omitempty"`
 }
 
